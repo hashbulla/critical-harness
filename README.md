@@ -1,14 +1,36 @@
-# Critical Harness
+<p align="center">
+  <strong>Critical Harness</strong>
+</p>
 
-**Adversarial quality review for any GitHub repository, delivered as a Claude Code skill.**
+<p align="center">
+  <em>Adversarial quality review for any GitHub repository, delivered as a Claude Code skill.</em>
+</p>
 
-Point it at a repo. It infers what the project is supposed to be, grades it against that intent across six dimensions, and opens a GitHub Issue with every finding pinned to a file and line — ready for an autonomous fix session.
+<p align="center">
+  <img src="https://img.shields.io/badge/Claude_Code-Skill-7C3AED?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PHBhdGggZD0iTTIgMTdsMTAgNSAxMC01Ii8+PHBhdGggZD0iTTIgMTJsMTAgNSAxMC01Ii8+PC9zdmc+" alt="Claude Code Skill">
+  <img src="https://img.shields.io/badge/Model-Opus_4.6-E04E2A?style=for-the-badge" alt="Opus 4.6">
+  <img src="https://img.shields.io/badge/Agents-3_Isolated-0891B2?style=for-the-badge" alt="3 Agents">
+  <img src="https://img.shields.io/badge/Rubric-6_Dimensions-059669?style=for-the-badge" alt="6 Dimensions">
+  <img src="https://img.shields.io/badge/Output-GitHub_Issue-1F2328?style=for-the-badge&logo=github" alt="GitHub Issue">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/github/issues/hashbulla/critical-harness?style=flat-square&color=blue" alt="Issues">
+  <img src="https://img.shields.io/badge/DevSecOps-Planned-orange?style=flat-square" alt="DevSecOps">
+</p>
+
+---
+
+Point it at a repo. It infers what the project is supposed to be, grades it against that intent across six weighted dimensions, and opens a GitHub Issue with every finding pinned to a file and line — ready for an autonomous fix session.
+
+> **Why does this exist?** Models are constitutionally bad at evaluating their own work. Anthropic's research shows they "confidently praise the work — even when quality is obviously mediocre." The fix is not better prompting. It is structural separation: the agent that infers intent never grades the code. The agent that grades the code never sees the reasoning behind the spec. This skill enforces that separation at the infrastructure level.
 
 ---
 
 ## What You Get
 
-A structured GitHub Issue that looks like this:
+A structured GitHub Issue with scored dimensions, file:line findings, and fix instructions:
 
 ```
 Harness Review — my-project — 2026-03-31
@@ -17,243 +39,293 @@ Spec Confidence: HIGH (anchored on .claude/CLAUDE.md)
 
 | # | Dimension                    | Score | Status |
 |---|------------------------------|-------|--------|
-| 1 | Architectural Intent Match   | 6.5   | WARN   |
-| 2 | Intentionality / Anti-Slop   | 5.0   | WARN   |
-| 3 | Code Craft                   | 7.5   | PASS   |
-| 4 | Security Posture             | 4.0   | FAIL   |
-| 5 | CLAUDE.md Completeness       | 3.0   | FAIL   |
-| 6 | Observability & Testability  | 7.0   | PASS   |
+| 1 | Architectural Intent Match   |  6.5  |  WARN  |
+| 2 | Intentionality / Anti-Slop   |  5.0  |  WARN  |
+| 3 | Code Craft                   |  7.5  |  PASS  |
+| 4 | Security Posture             |  4.0  |  FAIL  |
+| 5 | CLAUDE.md Completeness       |  3.0  |  FAIL  |
+| 6 | Observability & Testability  |  7.0  |  PASS  |
 
 Weighted Overall: 5.6 / 10.0
+```
 
-CRITICAL findings:
+```
+CRITICAL:
   [SECURITY] src/config.ts:42 — AWS key hardcoded in config object
   [CLAUDE.md] .claude/CLAUDE.md — 12 lines, all boilerplate, no architecture docs
 
-WARNING findings:
+WARNING:
   [INTENT] src/routes/ — 3 endpoints not referenced in README feature list
   [SLOP] src/utils/helpers.ts — 47-line generic error handler unused by any caller
 
-Coverage gaps:
-  Dimension 3 — did not audit internal module boundaries
-  Dimension 6 — no dynamic health check probe (skipped by user)
-
 Fix Session Instructions:
-  1. Start with CRITICAL findings — they block production readiness
+  1. Start with CRITICAL findings
   2. Work WARNINGs in listed order
   3. Re-run: /critical-harness https://github.com/org/my-project
 ```
 
-Every finding carries a concrete fix instruction. A follow-up Claude Code session can read the Issue and implement all fixes without asking you for context.
+Every finding carries a concrete fix instruction. A follow-up Claude Code session can read the Issue and implement all fixes without asking for context.
 
 ---
 
-## Install
+## Quick Start
 
-Copy the skill directory into your global Claude Code skills folder:
-
-```bash
-# Clone the repo
-gh repo clone hashbulla/critical-harness /tmp/critical-harness-install
-
-# Copy to your global skills directory
-cp -r /tmp/critical-harness-install ~/.claude/skills/critical-harness
-
-# Clean up
-rm -rf /tmp/critical-harness-install
-```
-
-Or if you prefer a one-liner:
+### Install
 
 ```bash
 gh repo clone hashbulla/critical-harness ~/.claude/skills/critical-harness
 ```
 
-After install, Claude Code discovers the skill automatically. No restart needed.
+Claude Code discovers the skill automatically. No restart needed.
+
+### Run
+
+```bash
+# Let the harness infer project intent
+/critical-harness https://github.com/org/repo-name
+
+# Or provide your own product brief
+/critical-harness https://github.com/org/repo-name --spec "A REST API for product catalog data. 1k rps. JWT auth."
+```
 
 ### Prerequisites
 
 | Requirement | Why | Check |
-|-------------|-----|-------|
-| **Claude Code** | Runtime for the skill | `claude --version` |
-| **Opus model active** | Skill halts if not on Opus — evaluation depth requires it | `/model opus` in Claude Code |
-| **GitHub CLI authenticated** | Clones the target repo, creates the output Issue | `gh auth status` |
-| **Tavily MCP server** (optional) | Powers the Dynamic Strategist phase — skip if not configured | Tavily tools visible in `/mcp` |
+|:------------|:----|:------|
+| ![Claude Code](https://img.shields.io/badge/Claude_Code-required-7C3AED?style=flat-square) | Runtime for the skill | `claude --version` |
+| ![Opus](https://img.shields.io/badge/Opus-required-E04E2A?style=flat-square) | Evaluation depth requires it — skill halts otherwise | `/model opus` |
+| ![gh CLI](https://img.shields.io/badge/gh_CLI-required-1F2328?style=flat-square) | Clones repo, creates output Issue | `gh auth status` |
+| ![Tavily](https://img.shields.io/badge/Tavily_MCP-optional-gray?style=flat-square) | Powers Dynamic Strategist phase | Visible in `/mcp` |
 
-If you don't have Tavily configured, the Dynamic Strategist phase will be limited. You can skip it at Gate 3 with no impact on the core static evaluation.
-
----
-
-## Usage
-
-### Basic — let the harness infer everything
-
-```
-/critical-harness https://github.com/org/repo-name
-```
-
-The Analyst reads the repo's README, CLAUDE.md, package manifests, and git history to figure out what the project is supposed to be. You confirm the inferred spec before grading starts.
-
-### With a product brief — you define the intent
-
-```
-/critical-harness https://github.com/org/repo-name --spec "A REST API that serves product catalog data to mobile clients. Must handle 1k rps. Auth via JWT."
-```
-
-The `--spec` overrides inference. The Critic grades against your stated intent instead of guessing. Use this when the README is thin or misleading.
+> No Tavily? Skip dynamic testing at Gate 3 — the core static evaluation is unaffected.
 
 ---
 
-## What Happens When You Run It
+## Pipeline
 
-The harness walks you through four phases with three checkpoints where you confirm or redirect before it continues.
+```mermaid
+flowchart TD
+    Start(["/critical-harness &lt;url&gt;"]) --> P0
 
+    subgraph P0["Phase 0 — Bootstrap"]
+        B1[Parse arguments] --> B2[Verify Opus model]
+        B2 --> B3[Check gh auth]
+        B3 --> B4[Read oracle guide]
+        B4 --> B5[Create staging dir]
+    end
+
+    P0 --> G1
+
+    G1{{"Gate 1 — Strategy Proposal\n\nRepo type guess\nSpec anchor strategy\nPredicted risk dimensions"}}
+    G1 -- "User confirms" --> P1
+
+    subgraph P1["Phase 1 — Analyst Agent"]
+        direction LR
+        A1["Clone repo"] --> A2["Read signals\nCLAUDE.md → README → manifests → git log"]
+        A2 --> A3["Write Inferred Spec"]
+    end
+
+    P1 --> G2
+
+    G2{{"Gate 2 — Spec Confirmation\n\nInferred intent summary\nConfidence level + sources\nUser can correct the spec"}}
+    G2 -- "User confirms or corrects" --> P2
+
+    subgraph P2["Phase 2 — Dynamic Strategist Agent"]
+        direction LR
+        D1["Identify runtime surface"] --> D2["Tavily research\nfor stack-specific testing"]
+        D2 --> D3["Write test strategy"]
+    end
+
+    P2 --> G3
+
+    G3{{"Gate 3 — Strategy Approval\n\nProposed mechanism\nDefect coverage analysis\nApprove / Modify / Skip"}}
+    G3 -- "User decides" --> P3
+
+    subgraph P3["Phase 3 — Critic Agent ☠ isolated"]
+        direction LR
+        C1["Static checks"] --> C2["6-dimension\nrubric grading"]
+        C2 --> C3["Dynamic tests\n(if approved)"]
+        C3 --> C4["Write findings"]
+    end
+
+    P3 --> P4
+
+    subgraph P4["Phase 4 — Reporter"]
+        direction LR
+        R1["Format Issue body"] --> R2["gh issue create"]
+        R2 --> R3["Cleanup staging"]
+    end
+
+    P4 --> Done(["Issue URL or REVIEW.md fallback"])
+
+    style G1 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style G2 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style G3 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style P1 fill:#DBEAFE,stroke:#3B82F6
+    style P2 fill:#FEF9C3,stroke:#CA8A04
+    style P3 fill:#FEE2E2,stroke:#EF4444
+    style P4 fill:#F3F4F6,stroke:#6B7280
+    style Start fill:#7C3AED,stroke:#7C3AED,color:#fff
+    style Done fill:#059669,stroke:#059669,color:#fff
 ```
-You invoke the skill
-        |
-        v
-  Phase 0 — Bootstrap
-  Reads the oracle guide, verifies Opus model, checks gh auth
-        |
-        v
-  Gate 1 --- You confirm ---> "Does this framing match your intent?"
-  Shows: repo type guess, proposed spec strategy, predicted risk dimensions
-        |
-        v
-  Phase 1 — Analyst (agent)
-  Clones repo, reads signals, writes Inferred Spec
-        |
-        v
-  Gate 2 --- You confirm ---> "Does this spec match your project?"
-  Shows: inferred intent, confidence level, signal sources
-  You can correct the spec here — corrections propagate to all grading
-        |
-        v
-  Phase 2 — Dynamic Strategist (agent)
-  Researches stack-specific testing via Tavily, proposes a test strategy
-        |
-        v
-  Gate 3 --- You choose ---> Approve / Modify / Skip dynamic testing
-  Shows: mechanism, defect classes reached, complexity estimate, sources
-        |
-        v
-  Phase 3 — Critic (isolated agent)
-  Static checks + 6-dimension rubric grading + optional dynamic tests
-  Runs in worktree isolation — cannot see Analyst reasoning
-        |
-        v
-  Phase 4 — Reporter
-  Formats findings into GitHub Issue, creates it, cleans up
-        |
-        v
-  Output: GitHub Issue URL (or local REVIEW.md if gh fails)
-```
 
-### The three gates
+### The Three Gates
 
-The gates are not optional. They exist because:
+| Gate | Purpose | Time |
+|:-----|:--------|:-----|
+| ![Gate 1](https://img.shields.io/badge/Gate_1-Strategy-D97706?style=flat-square) | Catches bad assumptions before cloning | ~10s |
+| ![Gate 2](https://img.shields.io/badge/Gate_2-Spec-DC2626?style=flat-square) | **Load-bearing** — wrong spec poisons every finding | ~20s |
+| ![Gate 3](https://img.shields.io/badge/Gate_3-Dynamic-2563EB?style=flat-square) | Skip dynamic testing when it adds no value | ~10s |
 
-- **Gate 1** catches bad assumptions before you spend time cloning.
-- **Gate 2** is load-bearing — a wrong spec poisons every finding. This is your last chance to correct it.
-- **Gate 3** lets you skip dynamic testing when it adds no value (config repos, pure libraries, time constraints).
-
-You are not babysitting. You are steering. Each gate takes 10-30 seconds to review and confirm.
+You are not babysitting. You are steering. Three decisions, under a minute total.
 
 ---
 
-## How It Grades
+## Rubric
 
 Six dimensions, weighted by where AI-generated code most commonly fails:
 
-| Dimension | Weight | What it catches |
-|-----------|--------|-----------------|
-| **Architectural Intent Match** | 2x | Does the code do what the README says it does? Scope creep, missing features, structural contradictions. |
-| **Intentionality / Anti-Slop** | 2x | Boilerplate nobody needs, AI-generated patterns applied without thought, TODO comments in production code. |
-| **Code Craft** | 1.5x | Missing error handling, DRY violations that create divergence risk, dead code, silent failures. |
-| **Security Posture** | 1.5x | Hardcoded secrets, insecure defaults, missing input validation. Any security finding auto-escalates to CRITICAL. |
-| **CLAUDE.md Completeness** | 1x | Would a new agent session understand this project from the context file alone? |
-| **Observability & Testability** | 1x | Can you tell from outside whether this thing is working? Tests, logs, health checks. |
+```mermaid
+quadrantChart
+    title Rubric Weight vs Typical AI Failure Rate
+    x-axis Low Failure Rate --> High Failure Rate
+    y-axis Low Weight --> High Weight
+    quadrant-1 High Priority
+    quadrant-2 Watch
+    quadrant-3 Baseline
+    quadrant-4 Frequent but Low Impact
+    Architectural Intent: [0.75, 0.9]
+    Anti-Slop: [0.85, 0.9]
+    Code Craft: [0.55, 0.65]
+    Security: [0.65, 0.65]
+    CLAUDE.md: [0.7, 0.4]
+    Observability: [0.4, 0.4]
+```
 
-**Scoring:** 1-10 per dimension, half-points allowed. Pass is 7.0+. Below 5.0 auto-escalates to CRITICAL. Overall score is the weighted mean.
+| # | Dimension | Weight | What it catches |
+|:-:|:----------|:------:|:----------------|
+| 1 | **Architectural Intent Match** | `2x` | Does the code do what the README says? Scope creep, missing features, structural contradictions. |
+| 2 | **Intentionality / Anti-Slop** | `2x` | Boilerplate nobody needs, AI-generated patterns applied without thought, TODO in production. |
+| 3 | **Code Craft** | `1.5x` | Missing error handling, DRY violations, dead code, silent failures. |
+| 4 | **Security Posture** | `1.5x` | Hardcoded secrets, insecure defaults, missing input validation. Auto-escalates to CRITICAL. |
+| 5 | **CLAUDE.md Completeness** | `1x` | Would a new agent session understand this project from the context file? |
+| 6 | **Observability & Testability** | `1x` | Tests, structured logging, health checks. Can you tell from outside it works? |
 
-The Critic is constitutionally skeptical: it does not give credit for intent, does not round up scores, and must provide file:line evidence for every finding. Findings without evidence are marked Unknown, not fabricated.
+> **Scoring:** 1-10 per dimension, half-points allowed. **Pass** >= 7.0. **Below 5.0** auto-escalates to CRITICAL. Overall = weighted mean.
+
+The Critic is constitutionally skeptical: no credit for intent, no rounding up, file:line evidence required on every finding. Findings without evidence are marked Unknown — never fabricated.
 
 ---
 
-## Architecture — Why Three Agents
+## Architecture
 
-The harness exists because models are bad at evaluating their own work. Anthropic's research found that agents "tend to respond by confidently praising the work — even when, to a human observer, the quality is obviously mediocre." This is not fixable by prompting harder. It is an architecture problem.
+```mermaid
+block-beta
+    columns 4
 
-The fix is structural separation:
+    block:orchestrator:4
+        columns 4
+        SKILL["SKILL.md\nOrchestrator"]
+        gate1["Gate 1"]
+        gate2["Gate 2"]
+        gate3["Gate 3"]
+    end
 
+    space:4
+
+    analyst["agents/analyst.md\n\nSpec Inference\n\nmodel: opus\ntools: Read, Glob,\nGrep, Bash"]:1
+    strategist["agents/dynamic-strategist.md\n\nTest Strategy\n\nmodel: opus\ntools: Read, Glob, Grep,\nBash, Tavily MCP"]:1
+    critic["agents/critic.md\n\nAdversarial Grader\n\nmodel: opus\ntools: Read, Glob,\nGrep, Bash\nisolation: worktree"]:1
+    ref["references/\nharness-guide.md\n\nOracle Context"]:1
+
+    style orchestrator fill:#7C3AED22,stroke:#7C3AED
+    style SKILL fill:#7C3AED,color:#fff
+    style gate1 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style gate2 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style gate3 fill:#FEF3C7,stroke:#D97706,color:#92400E
+    style analyst fill:#DBEAFE,stroke:#3B82F6
+    style strategist fill:#FEF9C3,stroke:#CA8A04
+    style critic fill:#FEE2E2,stroke:#EF4444
+    style ref fill:#F3F4F6,stroke:#6B7280
 ```
-agents/analyst.md        — Infers what the project should be
-agents/dynamic-strategist.md — Researches how to test it
-agents/critic.md         — Grades it (worktree-isolated, no access to Analyst reasoning)
-SKILL.md                 — Orchestrates the pipeline, owns the gates and reporter
-```
 
-The Analyst writes a spec. The Critic reads only that spec and the codebase — it never sees the Analyst's thought process. This is enforced at the infrastructure level via `isolation: worktree`, not by prompt instruction.
+**Why three agents?** The Analyst writes a spec. The Critic reads only that spec and the codebase — it never sees the Analyst's thought process. Enforced via `isolation: worktree` at the infrastructure level, not by prompt instruction. Each agent has its own `model: opus` declaration and restricted tool access.
 
-Each agent has its own model declaration (`model: opus`) and restricted tool access. The Critic gets Read/Glob/Grep/Bash only — no Write tool, no network tools. It can read the codebase and write findings to the staging directory. Nothing else.
-
----
-
-## File Structure
+### File Structure
 
 ```
 ~/.claude/skills/critical-harness/
-|
-|-- SKILL.md                          Orchestrator — pipeline, gates, reporter
-|-- agents/
-|   |-- analyst.md                    Spec inference (model: opus)
-|   |-- dynamic-strategist.md         Tavily-powered test strategy (model: opus)
-|   |-- critic.md                     Adversarial grader (model: opus, read-only)
-|-- references/
-|   |-- harness-guide.md              Evaluation philosophy, rubric rules, failure modes
+├── SKILL.md                          # Orchestrator — pipeline, gates, reporter
+├── agents/
+│   ├── analyst.md                    # Spec inference (model: opus)
+│   ├── dynamic-strategist.md         # Tavily-powered test strategy (model: opus)
+│   └── critic.md                     # Adversarial grader (model: opus, read-only)
+└── references/
+    └── harness-guide.md              # Evaluation philosophy, rubric, failure modes
 ```
 
 ---
 
 ## Troubleshooting
 
-### "This harness requires Opus-class reasoning capacity"
+<details>
+<summary><strong>"This harness requires Opus-class reasoning capacity"</strong></summary>
 
-The skill checks the active model at startup. Switch to Opus:
+The skill checks the active model at startup. Switch to Opus and re-invoke:
 
 ```
 /model opus
+/critical-harness https://github.com/org/repo
 ```
+</details>
 
-Then re-invoke the skill.
+<details>
+<summary><strong><code>gh issue create</code> fails</strong></summary>
 
-### `gh issue create` fails
-
-The Reporter falls back to writing `REVIEW.md` in your current working directory. The file contains the full Issue body. You can create the Issue manually:
+The Reporter writes `REVIEW.md` as a fallback. Create the Issue manually:
 
 ```bash
-gh issue create --repo <repo_url> --title "Harness Review — ..." --body-file REVIEW.md
+gh issue create --repo <url> --title "Harness Review — ..." --body-file REVIEW.md
 ```
+</details>
 
-### Tavily tools not available
+<details>
+<summary><strong>Tavily tools not available</strong></summary>
 
-The Dynamic Strategist uses Tavily MCP for stack-specific test research. If Tavily is not configured, the strategist will have limited research capability. At Gate 3, choose "Skip dynamic testing" — the core static evaluation is unaffected.
+At Gate 3, choose "Skip dynamic testing." The core 6-dimension static evaluation runs without Tavily.
+</details>
 
-### The Analyst produces a LOW confidence spec
+<details>
+<summary><strong>LOW confidence spec</strong></summary>
 
-This means the repo had no CLAUDE.md, a thin README, and limited git history. The harness still works — it just grades dimension 1 conservatively, penalizing only clear divergences rather than inferred omissions. You can also provide `--spec` to bypass inference entirely.
+The repo had no CLAUDE.md, a thin README, and limited git history. The harness grades dimension 1 conservatively. Provide `--spec` to bypass inference entirely.
+</details>
 
 ---
 
 ## Extending
 
-**Tune the Critic:** Edit `agents/critic.md` to adjust rubric weights, add penalization criteria, or change score thresholds. Each dimension is self-contained — you can modify one without affecting others.
+| Goal | How |
+|:-----|:----|
+| **Tune scoring** | Edit `agents/critic.md` — adjust weights, thresholds, or penalization criteria per dimension |
+| **Add a dimension** | Add a new section in `agents/critic.md`, update the scoring table and `references/harness-guide.md` |
+| **Swap the Strategist** | Replace `agents/dynamic-strategist.md` or remove the Phase 2 block from `SKILL.md` |
+| **Private repos** | Works out of the box if `gh auth status` shows access to the target repo |
 
-**Add dimensions:** Add a new dimension section to `agents/critic.md` and update the scoring table. Update `references/harness-guide.md` to document the new dimension.
+---
 
-**Swap the Strategist:** Replace or remove `agents/dynamic-strategist.md` if you have a different approach to dynamic testing. The orchestrator spawns it by name — point it at a different agent file or remove the Phase 2 block from SKILL.md.
+## Roadmap
 
-**Run against private repos:** Works out of the box as long as `gh auth status` shows access to the target repo. No additional configuration needed.
+| Status | Feature |
+|:------:|:--------|
+| ![Done](https://img.shields.io/badge/-Done-059669?style=flat-square) | Multi-agent pipeline with structural separation |
+| ![Done](https://img.shields.io/badge/-Done-059669?style=flat-square) | 6-dimension rubric with constitutional skepticism |
+| ![Done](https://img.shields.io/badge/-Done-059669?style=flat-square) | Worktree-isolated Critic agent |
+| ![Done](https://img.shields.io/badge/-Done-059669?style=flat-square) | Tavily-powered dynamic test strategy |
+| ![Planned](https://img.shields.io/badge/-Planned-D97706?style=flat-square) | DevSecOps CI gate — deterministic static checks as GitHub Action ([#1](https://github.com/hashbulla/critical-harness/issues/1)) |
+| ![Planned](https://img.shields.io/badge/-Planned-D97706?style=flat-square) | `--ci` flag for scheduled headless runs |
+| ![Future](https://img.shields.io/badge/-Future-6B7280?style=flat-square) | Panel model — multiple reviewer personas for finding generation |
+| ![Future](https://img.shields.io/badge/-Future-6B7280?style=flat-square) | Calibration loop — tune Critic against human judgment baselines |
 
 ---
 
@@ -261,15 +333,17 @@ This means the repo had no CLAUDE.md, a thin README, and limited git history. Th
 
 This skill implements patterns from Anthropic's published engineering research:
 
-- [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) — Planner/Generator/Evaluator pipeline, self-evaluation bias, evaluator calibration
-- [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Grader types, isolated per-criterion scoring, Unknown fallback
-- [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) — Isolated scoring outperforms aggregated panels
-- [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) — Context reset, "getting up to speed" sequence
+| Paper | Key Concept Used |
+|:------|:-----------------|
+| [Harness design for long-running apps](https://www.anthropic.com/engineering/harness-design-long-running-apps) | Planner/Generator/Evaluator pipeline, self-evaluation bias, evaluator calibration |
+| [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) | Grader types, isolated per-criterion scoring, Unknown fallback |
+| [Multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) | Isolated scoring outperforms aggregated panels |
+| [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) | Context reset, "getting up to speed" sequence |
 
-The full annotated research synthesis is in `references/harness-guide.md`.
+Full annotated synthesis: [`references/harness-guide.md`](references/harness-guide.md)
 
 ---
 
-## License
-
-MIT
+<p align="center">
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT">
+</p>
