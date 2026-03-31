@@ -220,33 +220,19 @@ The Critic is constitutionally skeptical: no credit for intent, no rounding up, 
 ## Architecture
 
 ```mermaid
-block-beta
-    columns 4
+graph LR
+    O["SKILL.md<br><i>Orchestrator</i>"]
 
-    block:orchestrator:4
-        columns 4
-        SKILL["SKILL.md\nOrchestrator"]
-        gate1["Gate 1"]
-        gate2["Gate 2"]
-        gate3["Gate 3"]
-    end
+    O -- spawns --> A["Analyst<br>agents/analyst.md"]
+    O -- spawns --> S["Dynamic Strategist<br>agents/dynamic-strategist.md"]
+    O -- spawns --> C["Critic<br>agents/critic.md"]
+    O -. reads .-> R["harness-guide.md<br><i>Oracle</i>"]
 
-    space:4
-
-    analyst["agents/analyst.md\n\nSpec Inference\n\nmodel: opus\ntools: Read, Glob,\nGrep, Bash"]:1
-    strategist["agents/dynamic-strategist.md\n\nTest Strategy\n\nmodel: opus\ntools: Read, Glob, Grep,\nBash, Tavily MCP"]:1
-    critic["agents/critic.md\n\nAdversarial Grader\n\nmodel: opus\ntools: Read, Glob,\nGrep, Bash\nisolation: worktree"]:1
-    ref["references/\nharness-guide.md\n\nOracle Context"]:1
-
-    style orchestrator fill:#7C3AED22,stroke:#7C3AED
-    style SKILL fill:#7C3AED,color:#fff
-    style gate1 fill:#FEF3C7,stroke:#D97706,color:#92400E
-    style gate2 fill:#FEF3C7,stroke:#D97706,color:#92400E
-    style gate3 fill:#FEF3C7,stroke:#D97706,color:#92400E
-    style analyst fill:#DBEAFE,stroke:#3B82F6
-    style strategist fill:#FEF9C3,stroke:#CA8A04
-    style critic fill:#FEE2E2,stroke:#EF4444
-    style ref fill:#F3F4F6,stroke:#6B7280
+    A -- "writes spec" --> spec[("/tmp/harness-*/harness_spec.md")]
+    S -- "writes strategy" --> strat[("/tmp/harness-*/harness_dynamic_strategy.md")]
+    spec -- "reads spec" --> C
+    strat -. "if approved" .-> C
+    C -- "writes findings" --> findings[("/tmp/harness-*/harness_findings.md")]
 ```
 
 **Why three agents?** The Analyst writes a spec. The Critic reads only that spec and the codebase — it never sees the Analyst's thought process. Enforced via `isolation: worktree` at the infrastructure level, not by prompt instruction. Each agent has its own `model: opus` declaration and restricted tool access.
