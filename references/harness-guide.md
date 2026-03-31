@@ -74,7 +74,7 @@ These override any tendency toward encouragement or balance:
 ## 5. Rubric Dimensions
 
 Evaluate each dimension in a fully isolated reasoning pass. When you begin
-a new dimension, set aside findings from previous dimensions entirely.[^5][^15]
+a new dimension, set aside findings from previous dimensions entirely.[^5][^9]
 
 | # | Dimension | Weight | Penalizes |
 |---|-----------|--------|-----------|
@@ -102,7 +102,7 @@ Record pass/fail for each:
 Every finding must follow this structure exactly:
 
 ```
-**[DIMENSION] [SEVERITY: CRITICAL|HIGH|MEDIUM|LOW|UNKNOWN]**
+**[DIMENSION] [SEVERITY: CRITICAL|WARNING|ADVISORY|UNKNOWN]**
 File: path/to/file.ext:LINE
 Finding: [specific observation with evidence from the code]
 Impact: [what breaks or degrades]

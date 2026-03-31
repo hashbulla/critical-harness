@@ -235,7 +235,7 @@ graph LR
     C -- "writes findings" --> findings[("/tmp/harness-*/harness_findings.md")]
 ```
 
-**Why three agents?** The Analyst writes a spec. The Critic reads only that spec and the codebase — it never sees the Analyst's thought process. Enforced via `isolation: worktree` at the infrastructure level, not by prompt instruction. Each agent has its own `model: opus` declaration and restricted tool access.
+**Why three agents?** The Analyst writes a spec. The Critic reads only that spec and the codebase — it never sees the Analyst's thought process. The Critic runs with `isolation: worktree` for read-only filesystem access. The Analyst and Dynamic Strategist run in the orchestrator's fork context with restricted tool lists. Each agent has its own `model: opus` declaration.
 
 ### File Structure
 

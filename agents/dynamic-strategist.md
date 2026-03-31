@@ -116,7 +116,26 @@ to have installed.]
 | [search query 2] | [url] | [1-line finding] |
 ```
 
-### Step 4 — Static-Only Fallback
+### Step 4 — Tavily Unavailable Fallback
+
+If Tavily MCP tools are not available (tool calls fail or tools are not
+listed in the agent's available tool set), produce the strategy using
+static analysis signals only:
+
+- Set `Proposed Mechanism: Static analysis only`
+- Set `Rationale: Tavily MCP unavailable — strategy based on codebase
+  inspection and spec signals only`
+- Populate Defect Classes Reached / Not Reached from static inspection
+  of the codebase structure, test patterns, and runtime surface
+- Leave the Tavily Sources table empty with a note: "Tavily MCP
+  unavailable during this run"
+
+This is distinct from Step 5 (no runtime surface). Here the project MAY
+have a runtime surface, but Tavily cannot be consulted to research
+stack-specific approaches. The orchestrator will present this limitation
+at Gate 3 so the user can decide whether to proceed.
+
+### Step 5 — Static-Only Fallback
 
 If the project has no executable runtime surface (pure library with no
 examples, config-only repo, documentation-only project), propose
@@ -144,7 +163,9 @@ and 4 (Security Posture) more heavily in compensation.
   to the specific stack and version identified.
 - Do NOT inflate complexity estimates. If the strategy requires Docker and
   the project has no Dockerfile, that is "complex," not "moderate."
-- Every recommendation must cite at least one Tavily source.
+- Every recommendation must cite at least one Tavily source, unless
+  Tavily MCP is unavailable (see Step 4), in which case cite the
+  specific codebase signals that informed the recommendation.
 
 ### Exit Condition
 
